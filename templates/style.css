@@ -1,0 +1,28 @@
+*{
+margin: 0px;
+}
+#main, #canvas{
+    border: 2px solid black;
+}
+#canvas{
+    width: 80%;
+    margin: auto;
+    height: 900px;
+    padding: 10px;
+}
+#form-body{
+    border: 1px solid gray;
+    width: 370px;
+    margin: auto;
+    height: 350px;
+    margin-top: 100px;
+    padding: 5px;
+    border-radius: 5px;
+}
+.headings{
+    margin: 3px;
+    padding-left: 5px;
+}
+#trans-table{
+    height: 300px;
+}
