@@ -1,7 +1,7 @@
 from app import app
 from flask_sqlalchemy import SQLAlchemy
 import datetime
-
+from werkzeug.security import generate_password_hash
 db = SQLAlchemy(app)
 
 class Customer(db.Model):
@@ -10,10 +10,12 @@ class Customer(db.Model):
     username = db.Column(db.String(32), unique=True, nullable=False)
     passhash = db.Column(db.String(256), nullable=False)
     name = db.Column(db.String(64), nullable=True)
+    address=db.Column(db.String(128),nullable=False)
+    pincode=db.Column(db.Integer,nullable=False)
     service_requests = db.relationship("ServiceRequest", backref='customer', lazy=True)
     #for admin actions
     is_blocked = db.Column(db.Boolean, default=False)
-
+    
     def __repr__(self):
         return f"<Customer {self.username}>"
     
@@ -26,12 +28,12 @@ class ServiceProfessional(db.Model):
     date_created = db.Column(db.Date, default=datetime.datetime.utcnow)
     description = db.Column(db.String(256), nullable=True)
     experience = db.Column(db.String(64), nullable=True)
-    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'))
     service_requests = db.relationship("ServiceRequest", backref='professional', lazy=True)
     #for admin actions
     is_approved = db.Column(db.Boolean, default=False)
     is_blocked = db.Column(db.Boolean, default=False)
-
+    is_admin=db.Column(db.Boolean,default=False)
     def __repr__(self):
         return f"<ServiceProfessional {self.username}>"
 
@@ -70,3 +72,11 @@ class ServiceRequest(db.Model):
 
 with app.app_context():
     db.create_all()
+
+    admin=ServiceProfessional.query.filter_by(is_admin=True).first()
+
+    if not admin:
+        passhash=generate_password_hash('admin123')
+        admin=ServiceProfessional(username='admin', passhash=passhash,name='Admin',is_admin=True)
+        db.session.add(admin)
+        db.session.commit()
