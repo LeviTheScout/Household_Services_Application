@@ -1,0 +1,78 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+Admin Dashboard    
+{% endblock %}
+
+{% block content %}
+    <h1>Admin Dashboard</h1>
+
+    <h2>Service Professionals</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Pincode</th>
+                <th>Experience</th>
+                <th>Date Created</th>
+                <th>Description</th>
+                <th>Service</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for professional in professionals %}
+            <tr>
+                <td>{{ professional.id }}</td>
+                <td>{{ professional.name }}</td>
+                <td>{{ professional.address }}</td>
+                <td>{{ professional.pincode }}</td>
+                <td>{{ professional.professional.experience if professional.professional else 'N/A' }}</td>
+                <td>{{ professional.professional.date_created.strftime('%Y-%m-%d') if professional.professional else 'N/A' }}</td>
+                <td>{{ professional.professional.description if professional.professional else 'N/A' }}</td>
+                <td>{{ professional.professional.service.name if professional.professional else 'N/A' }}</td>
+                <td>{{ 'Approved' if professional.professional and professional.professional.is_approved else 'Pending' }}</td>
+                <td>
+                    <form action="{{ url_for('admin_dashboard') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="professional_id" value="{{ professional.id }}">
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                    </form>
+                    <form action="{{ url_for('admin_dashboard') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="professional_id" value="{{ professional.id }}">
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Service Requests</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Professional</th>
+                <th>Service</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in service_requests %}
+            <tr>
+                <td>{{ request.id }}</td>
+                <td>{{ request.customer.user.name }}</td>
+                <td>{{ request.professional.user.name if request.professional else 'Unassigned' }}</td>
+                <td>{{ request.service.name }}</td>
+                <td>{{ request.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

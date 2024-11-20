@@ -1,50 +1,92 @@
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    password = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(20), nullable=False)  # Admin, Customer, ServiceProfessional
+    is_active = db.Column(db.Boolean, default=True)  # Can be used for access control
+
+    def __repr__(self):
+        return f"<User {self.username} - {self.role}>"
+
+
+class Admin(db.Model):
+    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    user = db.relationship('User', backref=db.backref('admin', uselist=False))
+
+
+class Customer(db.Model):
+    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    user = db.relationship('User', backref=db.backref('customer', uselist=False))
+
+
+class ServiceProfessional(db.Model):
+    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    user = db.relationship('User', backref=db.backref('service_professional', uselist=False))
+    is_approved = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<ServiceProfessional {self.user.username} - {'Approved' if self.is_approved else 'Pending Approval'}>"
+
+
+# Default Admin creation logic
+def create_default_admin():
+    admin_email = "admin@example.com"
+    admin_username = "admin"
+    existing_admin = User.query.filter_by(role='Admin').first()
+    if not existing_admin:
+        admin_user = User(username=admin_username, email=admin_email, password="admin123", role="Admin")
+        db.session.add(admin_user)
+        db.session.commit()
+        admin = Admin(user=admin_user)
+        db.session.add(admin)
+        db.session.commit()
+        print("Default admin created.")
+    else:
+        print("Admin already exists.")
+
+
 from app import app
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 from werkzeug.security import generate_password_hash
 db = SQLAlchemy(app)
 
-class User(db.Model):
-    __tablename__ = 'user'
+class Customer(db.Model):
+    __tablename__ = 'customer'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(32), unique=True, nullable=False)
     passhash = db.Column(db.String(256), nullable=False)
     name = db.Column(db.String(64), nullable=True)
-    address = db.Column(db.String(128), nullable=False)
-    pincode = db.Column(db.Integer, nullable=False)
-    user_type = db.Column(db.String(20), nullable=False)  # 'admin', 'customer', 'professional'
+    address=db.Column(db.String(128),nullable=False)
+    pincode=db.Column(db.Integer,nullable=False)
+    service_requests = db.relationship("ServiceRequest", backref='customer', lazy=True)
+    #for admin actions
     is_blocked = db.Column(db.Boolean, default=False)
     
-    # Relationship for Customer
-    customer = db.relationship('Customer', backref='user', uselist=False, cascade='all, delete-orphan')
-    # Relationship for ServiceProfessional
-    professional = db.relationship('ServiceProfessional', backref='user', uselist=False, cascade='all, delete-orphan')
-
     def __repr__(self):
-        return f"<User {self.username} ({self.user_type})>"
-
-class Customer(db.Model):
-    __tablename__ = 'customer'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    service_requests = db.relationship("ServiceRequest", backref='customer', lazy=True)
-
-    def __repr__(self):
-        return f"<Customer {self.user.username}>"
-
+        return f"<Customer {self.username}>"
+    
 class ServiceProfessional(db.Model):
     __tablename__ = 'service_professional'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(64), nullable=False)
+    username = db.Column(db.String(32), unique=True, nullable=False)
+    passhash = db.Column(db.String(256), nullable=False)
+    address=db.Column(db.String(128),nullable=False)
+    pincode=db.Column(db.Integer,nullable=False)
     date_created = db.Column(db.Date, default=datetime.datetime.utcnow)
     description = db.Column(db.String(256), nullable=True)
     experience = db.Column(db.String(64), nullable=True)
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'))
     service_requests = db.relationship("ServiceRequest", backref='professional', lazy=True)
+    #for admin actions
     is_approved = db.Column(db.Boolean, default=False)
-
+    is_blocked = db.Column(db.Boolean, default=False)
+    is_admin=db.Column(db.Boolean,default=False)
     def __repr__(self):
-        return f"<ServiceProfessional {self.user.username}>"
+        return f"<ServiceProfessional {self.username}>"
 
 class Service(db.Model):
     __tablename__ = 'service'
@@ -84,18 +126,11 @@ with app.app_context():
     db.create_all()
 
     # Ensure an admin exists
-    admin_user = User.query.filter_by(user_type='admin').first()
-    if not admin_user:
+    admin = ServiceProfessional.query.filter_by(is_admin=True).first()
+    if not admin:
         passhash = generate_password_hash('admin123')
-        admin_user = User(
-            username='admin',
-            passhash=passhash,
-            name='Admin',
-            user_type='admin',
-            address='123',
-            pincode=123
-        )
-        db.session.add(admin_user)
+        admin = ServiceProfessional(username='admin', passhash=passhash, name='Admin', is_admin=True, address='123', pincode=123)
+        db.session.add(admin)
 
     # Add default services if they don't exist
     default_services = [

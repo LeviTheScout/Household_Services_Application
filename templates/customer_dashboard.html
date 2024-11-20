@@ -1,0 +1,83 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Dashboard - Household App
+{% endblock %}
+
+{% block style %}
+    <style>
+        .btn-service {
+            font-size: 1.2rem;
+            padding: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+
+    <!-- Looking For Section -->
+    <h2 class="mb-3">Looking For?</h2>
+    <div class="row text-center mb-4">
+        <div class="col-md-3">
+            <form action="{{ url_for('service_selection') }}" method="POST">
+                <input type="hidden" name="service" value="Plumbing">
+                <button type="submit" class="btn btn-outline-primary btn-service w-100">Plumbing</button>
+            </form>
+        </div>
+        <div class="col-md-3">
+            <form action="{{ url_for('service_selection') }}" method="POST">
+                <input type="hidden" name="service" value="Saloon">
+                <button type="submit" class="btn btn-outline-primary btn-service w-100">Saloon</button>
+            </form>
+        </div>
+        <div class="col-md-3">
+            <form action="{{ url_for('service_selection') }}" method="POST">
+                <input type="hidden" name="service" value="Cleaning">
+                <button type="submit" class="btn btn-outline-primary btn-service w-100">Cleaning</button>
+            </form>
+        </div>
+        <div class="col-md-3">
+            <form action="{{ url_for('service_selection') }}" method="POST">
+                <input type="hidden" name="service" value="Electrician">
+                <button type="submit" class="btn btn-outline-primary btn-service w-100">Electrician</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Service History Table -->
+    <h2>Service History</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>Service Name</th>
+                <th>Professional Name</th>
+                <th>Your Remark</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for service in services %}
+            <tr>
+                <td>{{ service.service.name }}</td>
+                <td>{{ service.professional.name }}</td>
+                <td>{{ service.remarks }}</td>
+                <td>
+                    {% if service.status == 'Pending' %}
+                    <form action="{{ url_for('update_service', service_id=service.id) }}" method="POST">
+                        <button type="submit" class="btn btn-warning btn-sm">Update Status</button>
+                    </form>
+                    {% elif service.status == 'Requested' %}
+                    <form action="{{ url_for('close_service', service_id=service.id) }}" method="POST">
+                        <button type="submit" class="btn btn-danger btn-sm">Close it?</button>
+                    </form>
+                    {% else %}
+                    {{ service.status }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

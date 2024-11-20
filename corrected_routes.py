@@ -1,6 +1,12 @@
+
+@app.before_first_request
+def setup_admin():
+    create_default_admin()
+
+
 from flask import render_template, request, redirect, url_for, flash, session
 from app import app
-from models import db, Service, ServiceProfessional, ServiceRequest, Customer, User
+from models import db, Service, ServiceProfessional, ServiceRequest, Customer
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
@@ -20,39 +26,13 @@ def authentication(func):
 def admin_authenticate(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        user = User.query.get(session.get('user_id'))
-        if user and user.user_type == 'admin':
+        user = ServiceProfessional.query.get(session.get('user_id'))
+        if user and session.get('user_role') == 'service_professional' and user.is_admin:
             return func(*args, **kwargs)
         flash('You are not authorized to access this page.')
         return redirect(url_for('login'))
     return inner
 
-@app.route('/login/admin', methods=['GET', 'POST'])
-def admin_login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-
-        if not username or not password:
-            flash('Please fill out all fields.')
-            return redirect(url_for('admin_login'))
-
-        user = User.query.filter_by(username=username).first()
-
-        if user and check_password_hash(user.passhash, password):
-            if user.user_type == 'admin':
-                session['user_id'] = user.id
-                session['user_role'] = 'admin'
-                flash('Admin login successful!')
-                return redirect(url_for('admin_dashboard'))
-            else:
-                flash('You are not authorized as an admin.')
-                return redirect(url_for('admin_login'))
-
-        flash('Invalid credentials. Please try again.')
-        return redirect(url_for('admin_login'))
-
-    return render_template('admin/admin_login.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -61,34 +41,23 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
+        # Input validation
         if not username or not password or not role:
             flash('Please fill out all the fields.')
             return redirect(url_for('login'))
 
-        user = User.query.filter_by(username=username).first()
-        
+        # Authenticate based on role
+        user = None
+        if role == 'customer':
+            user = Customer.query.filter_by(username=username).first()
+        elif role == 'service_professional':
+            user = ServiceProfessional.query.filter_by(username=username).first()
+
         if user and check_password_hash(user.passhash, password):
-            if role == 'customer' and user.user_type == 'customer':
-                session['user_id'] = user.id
-                session['user_role'] = 'customer'
-                flash('Login successful!')
-                return redirect(url_for('dashboard'))
-            elif role == 'service_professional':
-                if user.user_type == 'admin':
-                    session['user_id'] = user.id
-                    session['user_role'] = 'service_professional'
-                    flash('Login successful!')
-                    return redirect(url_for('dashboard'))
-                elif user.user_type == 'professional':
-                    # Check if professional is approved
-                    if user.professional and user.professional.is_approved:
-                        session['user_id'] = user.id
-                        session['user_role'] = 'service_professional'
-                        flash('Login successful!')
-                        return redirect(url_for('dashboard'))
-                    else:
-                        flash('You are yet to be approved by admin.')
-                        return redirect(url_for('login'))
+            session['user_id'] = user.id
+            session['user_role'] = role
+            flash('Login successful!')
+            return redirect(url_for('dashboard'))
 
         flash('Invalid credentials. Please try again.')
         return redirect(url_for('login'))
@@ -116,30 +85,17 @@ def signup_customer():
             return redirect(url_for('signup_customer'))
 
         # Check if username already exists
-        user_exists = User.query.filter_by(username=username).first()
+        user_exists = Customer.query.filter_by(username=username).first()
         if user_exists:
             flash('Username is already taken.')
             return redirect(url_for('signup_customer'))
 
         # Save user to database
         hashed_password = generate_password_hash(password)
-        new_user = User(
-            username=username,
-            passhash=hashed_password,
-            name=name,
-            address=address,
-            pincode=pincode,
-            user_type='customer'
-        )
+        new_user = Customer(username=username, passhash=hashed_password, name=name, address=address, pincode=pincode)
 
         db.session.add(new_user)
-        db.session.flush()  # Get the user ID
-
-        # Create customer profile
-        new_customer = Customer(user_id=new_user.id)
-        db.session.add(new_customer)
         db.session.commit()
-        
         flash('Signup successful! Please login.')
         return redirect(url_for('login'))
 
@@ -158,7 +114,7 @@ def signup_professional():
         pincode = request.form.get('pincode')
         service_type = request.form.get('service_type')
         experience = request.form.get('experience')
-        description = request.form.get('description')
+
         # Input validation
         if not all([username, password, confirm_password, address, pincode, service_type, experience]):
             flash('Please fill out all the fields.', 'danger')
@@ -169,7 +125,7 @@ def signup_professional():
             return redirect(url_for('signup_professional'))
 
         # Check if username already exists
-        user_exists = User.query.filter_by(username=username).first()
+        user_exists = ServiceProfessional.query.filter_by(username=username).first()
         if user_exists:
             flash('Username is already taken.', 'danger')
             return redirect(url_for('signup_professional'))
@@ -182,27 +138,18 @@ def signup_professional():
 
         # Save professional to the database
         hashed_password = generate_password_hash(password)
-        new_user = User(
+        new_user = ServiceProfessional(
             username=username,
             passhash=hashed_password,
             name=name,
             address=address,
             pincode=pincode,
-            user_type='professional'
+            experience=experience,
+            service_id=service.id
         )
 
         db.session.add(new_user)
-        db.session.flush()  # Get the user ID
-
-        # Create professional profile
-        new_professional = ServiceProfessional(
-            user_id=new_user.id,
-            experience=experience,
-            service_id=service.id,description=description
-        )
-        db.session.add(new_professional)
         db.session.commit()
-
         flash('Signup successful! Please login.', 'success')
         return redirect(url_for('login'))
 
@@ -219,68 +166,32 @@ def logout():
 @app.route('/dashboard')
 @authentication
 def dashboard():
-    user = User.query.get(session['user_id'])
-    
     if session['user_role'] == 'customer':
         # Fetch data for the customer dashboard
-        customer = user.customer
-        services = ServiceRequest.query.filter_by(customer_id=customer.id).all()
+        services = ServiceRequest.query.filter_by(customer_id=session['user_id']).all()
         return render_template('customer_dashboard.html', services=services)
     elif session['user_role'] == 'service_professional':
-
         # Fetch data for the service professional dashboard
-        professional = user.professional
-        requests = ServiceRequest.query.filter_by(professional_id=professional.id).all()
+        requests = ServiceRequest.query.filter_by(professional_id=session['user_id']).all()
+        professional = ServiceProfessional.query.get(session['user_id'])  # Use get() to retrieve a single instance
         return render_template('professional_dashboard.html', professional=professional, requests=requests)
+    
     flash("Invalid user role.")
     return redirect(url_for('logout'))
-
-@app.route('/admin/dashboard', methods=['GET', 'POST'])
-@admin_authenticate
-def admin_dashboard():
-    if request.method == 'POST':
-        # Handle POST requests for admin actions
-        action = request.form.get('action')
-        professional_id = request.form.get('professional_id')
-        
-        if action and professional_id:
-            professional = User.query.get(professional_id)
-            if professional:
-                if action == 'approve':
-                    professional.professional.is_approved = True
-                    flash('Professional approved successfully.')
-                elif action == 'reject':
-                    professional.professional.is_approved = False
-                    # Delete the professional profile when rejected
-                    db.session.delete(professional.professional)
-                    # Delete the user account as well
-                    db.session.delete(professional)
-                    flash('Professional rejected and account removed.')
-                db.session.commit()
-                return redirect(url_for('admin_dashboard'))
-
-    # GET request - display dashboard
-    services = Service.query.all()
-    professionals = User.query.join(ServiceProfessional).filter(User.user_type=='professional', ServiceProfessional.is_approved==False).all()
-    customers = User.query.filter_by(user_type='customer').all() 
-    service_requests = ServiceRequest.query.all()
-    return render_template('/admin/admin_dash.html', services=services, professionals=professionals, 
-                         customers=customers, service_requests=service_requests)
-
 
 @app.route('/')
 @authentication
 def home():
-    user = User.query.get(session['user_id'])
-    if user.user_type == 'admin':
-        return redirect(url_for('admin_dashboard'))
+    user = Customer.query.get(session['user_id']) or ServiceProfessional.query.get(session['user_id'])
+    if session['user_role'] == 'service_professional' and user.is_admin:
+        return redirect(url_for('admin'))
     return redirect(url_for('dashboard'))
 
 
 @app.route('/profile', methods=['GET', 'POST'])
 @authentication
 def profile():
-    user = User.query.get(session['user_id'])
+    user = Customer.query.get(session['user_id']) or ServiceProfessional.query.get(session['user_id'])
 
     if request.method == 'POST':
         name = request.form.get('name')
@@ -303,6 +214,13 @@ def profile():
 
     return render_template('profile.html', user=user)
 
+
+@app.route('/admin')
+@admin_authenticate
+def admin_dashboard():
+    services = Service.query.all()
+    users = ServiceProfessional.query.filter_by(is_admin=False).all()
+    return render_template('admin_dash.html', services=services, users=users)
 
 
 # Route to handle admin service approval (example)
@@ -340,20 +258,20 @@ def salon():
 def handle_service_request(service_name, template_name):
     if request.method == 'POST':
         service = Service.query.filter_by(name=service_name).first()
-        if not service:
+        service_id = service.id
+        if not service_id:
             flash('Service ID could not be determined.', 'error')
             return redirect(url_for('dashboard'))
         
-        additional_info = request.form.get('additional_info')
-        professional_id = request.form.get('professional_id')
+        # Ensure additional_info and professional_id are retrieved correctly
+        additional_info = request.form.get('additional_info')  # Get additional info from the form
+        professional_id = request.form.get('professional_id')  # Get the professional ID from the form
         
-        if service.id and additional_info and professional_id:
-            user = User.query.get(session['user_id'])
-            customer = user.customer
-            
+        # Check if all required fields are present
+        if service_id and additional_info and professional_id:
             service_request = ServiceRequest(
-                service_id=service.id,
-                customer_id=customer.id,
+                service_id=service_id,
+                customer_id=session['user_id'],
                 remarks=additional_info,
                 professional_id=professional_id
             )
@@ -362,12 +280,9 @@ def handle_service_request(service_name, template_name):
             flash('Service request submitted successfully.')
             return redirect(url_for('dashboard'))
 
-    # Fetch all approved professionals who provide the specified service
+    # Fetch all professionals who provide the specified service
     service = Service.query.filter_by(name=service_name).first()
-    professionals = ServiceProfessional.query.filter_by(
-        service_id=service.id,
-        is_approved=True
-    ).all()
+    professionals = ServiceProfessional.query.filter_by(service_id=service.id).all()
     
     return render_template(template_name, service=service, professionals=professionals)
 
@@ -384,10 +299,10 @@ def approve_service(service_id):
 @app.route('/service/close/<int:service_id>', methods=['POST'])
 @authentication
 def close_service(service_id):
-    user = User.query.get(session['user_id'])
+    # Fetch the service request by ID
     service_request = ServiceRequest.query.get_or_404(service_id)
     
-    if session['user_role'] == 'customer' and service_request.customer_id == user.customer.id:
+    if session['user_role'] == 'customer' and service_request.customer_id == session['user_id']:
         service_request.close_request()
         db.session.commit()
         flash('Service closed successfully!')
