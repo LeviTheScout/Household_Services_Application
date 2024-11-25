@@ -482,7 +482,6 @@ def search():
     search_term = None
     
     if session['user_role'] == 'customer':
-        requests = None
         professionals = None
         services = None
 
@@ -491,7 +490,7 @@ def search():
             search_term = request.form.get('search_term')
 
             if search_type == 'services':
-    # Search for professionals providing the specified service
+                # Search for professionals providing the specified service
                 services = ServiceProfessional.query.join(Service, ServiceProfessional.service_id == Service.id) \
                     .join(User, ServiceProfessional.user_id == User.id) \
                     .outerjoin(ServiceRequest, ServiceRequest.professional_id == ServiceProfessional.id) \
@@ -511,30 +510,29 @@ def search():
                         User.name, User.pincode, Service.name
                     ) \
                     .all()
+            
             elif search_type == 'service_professionals':
-                # Search for service professionals
+                # Search for service professionals based on the search term
                 professionals = ServiceProfessional.query.join(User, ServiceProfessional.user_id == User.id) \
                     .filter(
-                        User.name.ilike(f"%{search_term}%"),
+                        or_(
+                            User.name.ilike(f"%{search_term}%"),
+                            User.pincode.ilike(f"%{search_term}%"),
+                            User.address.ilike(f"%{search_term}%")
+                        ),
                         ServiceProfessional.is_approved == True
                     ).all()
-            # elif search_type == 'services':
-            #     # Search for available services
-            #     services = Service.query.filter(
-            #         Service.name.ilike(f"%{search_term}%")
-            #     ).all()
 
         return render_template('customer/customer_search.html', search_type=search_type, 
-                                professionals=professionals, services=services)
+                               professionals=professionals, services=services)
 
     elif session['user_role'] == 'service_professional':
-
         customers = None
 
         if request.method == 'POST':
             search_term = request.form.get('search_term')
 
-                # Search for customers linked to the professional's requests
+            # Search for customers linked to the professional's requests
             customers = Customer.query.join(User, Customer.user_id == User.id) \
                 .join(ServiceRequest, ServiceRequest.customer_id == Customer.id) \
                 .filter(
@@ -543,7 +541,7 @@ def search():
                         User.pincode.ilike(f"%{search_term}%"),
                         User.address.ilike(f"%{search_term}%")
                     ),
-                    ServiceRequest.professional_id == session['role_id']
+                    ServiceRequest.professional_id == session['role_id']  # Only customers for this professional
                 ).all()
 
         return render_template('professional/professional_search.html', customers=customers)
@@ -620,7 +618,7 @@ def professional_profile(professional_id):
         flash(f"Professional has been successfully {status}.", "success")
 
     requests = ServiceRequest.query.filter_by(professional_id=professional_id).all()
-    return render_template('professional_profile.html', professional=professional, requests=requests)
+    return render_template('admin/professional_profile.html', professional=professional, requests=requests)
 
 @app.route('/customer/<int:customer_id>', methods=['GET', 'POST'])
 @admin_authenticate
@@ -634,7 +632,7 @@ def customer_profile(customer_id):
         return redirect(request.url)
     
     requests = ServiceRequest.query.filter_by(customer_id=customer_id).all()
-    return render_template('customer_profile.html', customer=customer, requests=requests)
+    return render_template('admin/customer_profile.html', customer=customer, requests=requests)
 
 
 
