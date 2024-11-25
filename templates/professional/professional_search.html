@@ -1,0 +1,64 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Search
+{% endblock %}
+
+{% block content %}
+    <h1>Search</h1>
+
+    <form action="" method="post">
+        <div class="form-group">
+            <label for="search_term">Search Term (Customer Name / Pincode):</label>
+            <input type="text" name="search_term" id="search_term" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    {% if customers %}
+        <h2>Customers</h2>
+        <table class="table table-bordered table-striped">
+            <thead class="table-primary">
+                <tr>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Pincode</th>
+                    <th>Service Requests</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>{{ customer.user.name }}</td>
+                    <td>{{ customer.user.address }}</td>
+                    <td>{{ customer.user.pincode }}</td>
+                    <td>
+                        <table class="table table-bordered table-striped">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Service Name</th>
+                                    <th>Request Date</th>
+                                    <th>Closing Date</th>
+                                    <th>Remarks</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in customer.service_requests if request.professional_id == session['role_id'] %}
+                                <tr>
+                                    <td>{{ request.service.name }}</td>
+                                    <td>{{ request.date_of_request.strftime('%Y-%m-%d') }}</td>
+                                    <td>{% if request.date_of_completion %}{{ request.date_of_completion.strftime('%Y-%m-%d') }}{% else %}N/A{% endif %}</td>
+                                    <td>{{ request.remarks }}</td>
+                                    <td>{{ request.service_status }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

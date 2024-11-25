@@ -1,0 +1,85 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Search
+{% endblock %}
+
+{% block content %}
+    <h1>Search</h1>
+
+    
+    <form action="" method="post">
+        <div class="form-group">
+            <label for="search_type">Search Type:</label>
+            <select name="search_type" id="search_type" class="form-control">
+                <option value="service_professionals">Service Professionals</option>
+                <option value="services">Services</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="search_term">Search Term:</label>
+            <input type="text" name="search_term" id="search_term" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+
+{% if search_type == 'service_professionals' %}
+    <h2>Service Professionals</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Pincode</th>
+                <th>Experience</th>
+                <th>Description</th>
+                <th>Service</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for professional in professionals if professional.is_approved %}
+            <tr>
+                <td>{{ professional.user.name }}</td>
+                <td>{{ professional.user.address }}</td>
+                <td>{{ professional.user.pincode }}</td>
+                <td>{{ professional.experience }}</td>
+                <td>{{ professional.description }}</td>
+                <td>{{ professional.service.name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% elif search_type == 'services' %}
+    <h2>Service Professionals Providing the Service</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>Professional Name</th>
+                <th>Pincode</th>
+                <th>Service</th>
+                <th>Average Rating</th>
+                <th>Total Requests</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if services %}
+                {% for professional in services %}
+                <tr>
+                    <td>{{ professional.professional_name }}</td>
+                    <td>{{ professional.pincode }}</td>
+                    <td>{{ professional.service_name }}</td>
+                    <td>{{ professional.average_rating if professional.average_rating else 'N/A' }}</td>
+                    <td>{{ professional.total_requests }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">No service professionals found matching your search.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% endblock %}

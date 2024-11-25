@@ -1,0 +1,112 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Search
+{% endblock %}
+
+{% block content %}
+<h1>Search</h1>
+
+<form action="" method="post">
+    <!-- Search Type Dropdown -->
+    <div class="form-group">
+        <label for="search_type">Search Type:</label>
+        <select name="search_type" id="search_type" class="form-control" onchange="this.form.submit()">
+            <option value="" disabled selected>Select a search type</option>
+            {% for type, params in available_searches.items() %}
+            <option value="{{ type }}" {% if search_type == type %}selected{% endif %}>{{ type.replace('_', ' ').title() }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Search Parameter Dropdown -->
+    {% if search_type %}
+    <div class="form-group">
+        <label for="search_param">Search Parameter:</label>
+        <select name="search_param" id="search_param" class="form-control">
+            {% for param in available_searches[search_type] %}
+            <option value="{{ param }}" {% if search_param == param %}selected{% endif %}>{{ param.replace('_', ' ').title() }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+
+    <!-- Search Term Input -->
+    <div class="form-group">
+        <label for="search_term">Search Term:</label>
+        <input type="text" name="search_term" id="search_term" class="form-control" value="{{ search_term }}">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+<!-- Display Errors -->
+{% if error_message %}
+<p style="color: red;">{{ error_message }}</p>
+{% endif %}
+
+<!-- Results Section -->
+{% if results %}
+<h2>Search Results</h2>
+<table class="table table-bordered table-striped">
+    <thead class="table-primary">
+        <tr>
+            {% if search_type == 'service_requests' %}
+            <th>Service Name</th>
+            <th>Professional Name</th>
+            <th>Customer Pincode</th>
+            <th>Request Date</th>
+            <th>Closing Date</th>
+            <th>Remarks</th>
+            <th>Status</th>
+            <th>Rating</th>
+            {% elif search_type == 'service_professionals' %}
+            <th>Name</th>
+            <th>Address</th>
+            <th>Pincode</th>
+            <th>Experience</th>
+            <th>Description</th>
+            <th>Service</th>
+            {% elif search_type == 'services' %}
+            <th>Name</th>
+            <th>Description</th>
+            {% elif search_type == 'customers' %}
+            <th>Name</th>
+            <th>Address</th>
+            <th>Pincode</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for result in results %}
+        <tr>
+            {% if search_type == 'service_requests' %}
+            <td>{{ result.service.name }}</td>
+            <td>{{ result.professional.user.name }}</td>
+            <td>{{ result.customer.user.pincode }}</td>
+            <td>{{ result.date_of_request.strftime('%Y-%m-%d') }}</td>
+            <td>{% if result.date_of_completion %}{{ result.date_of_completion.strftime('%Y-%m-%d') }}{% else %}N/A{% endif %}</td>
+            <td>{{ result.remarks }}</td>
+            <td>{{ result.service_status }}</td>
+            <td>{% if result.status == 'closed' %}{{ result.rating }}{% else %}N/A{% endif %}</td>
+            {% elif search_type == 'service_professionals' %}
+            <td>{{ result.user.name }}</td>
+            <td>{{ result.user.address }}</td>
+            <td>{{ result.user.pincode }}</td>
+            <td>{{ result.experience }}</td>
+            <td>{{ result.description }}</td>
+            <td>{{ result.service.name }}</td>
+            {% elif search_type == 'services' %}
+            <td>{{ result.name }}</td>
+            <td>{{ result.description }}</td>
+            {% elif search_type == 'customers' %}
+            <td>{{ result.user.name }}</td>
+            <td>{{ result.user.address }}</td>
+            <td>{{ result.user.pincode }}</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

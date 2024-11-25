@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Professional Stats
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Professional Service Statistics</h1>
+    
+    <!-- Chart 1: Service Request Status -->
+    <div class="mb-5">
+        <h3>Service Request Status</h3>
+        <img src="data:image/png;base64,{{ plot_url_status }}" alt="Service Request Status Chart" class="img-fluid">
+    </div>
+    
+    <!-- Chart 2: Rating Distribution -->
+    <div>
+        <h3>Rating Distribution</h3>
+        <img src="data:image/png;base64,{{ plot_url_ratings }}" alt="Rating Distribution Chart" class="img-fluid">
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Dashboard - Household App
+{% endblock %}
+
+{% block style %}
+    <style>
+        .btn-service {
+            font-size: 1.2rem;
+            padding: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+
+    <!-- Looking For Section -->
+    <h2 class="mb-3">Looking For?</h2>
+    <div class="row text-center mb-4">
+        {% for service in services %}
+        <div class="col-md-3">
+            <form action="{{ url_for('service_selection') }}" method="POST">
+                <input type="hidden" name="service" value="{{ service.name }}">
+                <button type="submit" class="btn btn-outline-primary btn-service w-100">{{ service.name }}</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2>On going Service Requests</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>Service Name</th>
+                <th>Professional Name</th>
+                <th>Your Remark</th>
+                <th>Status</th>
+                <th> Date of request </th>
+                <th>Close Request</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests if request.service_status in ['accepted','requested']  %}
+            <tr>
+                <td>{{ request.service.name }}</td>
+                <td>{{ request.professional.user.name }}</td>
+                <td>{{ request.remarks }}</td>
+                <td>{{ request.service_status }}</td>
+                <td>{{ request.date_of_request }}
+                <td>{% if request.service_status=='accepted' %}
+                    <a href="{{ url_for('close_service', request_id=request.id) }}" class="btn btn-outline-danger">Close</a>
+                    {% elif request.service_status=='requested'%}
+                    <a href="{{ url_for('edit_request', request_id=request.id) }}" class="btn btn-outline-danger">Edit</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Service History Table -->
+    <h2>Service History</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>Service Name</th>
+                <th>Professional Name</th>
+                <th>Your Remark</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests %}
+            <tr>
+                <td>{{ request.service.name }}</td>
+                <td>{{ request.professional.user.name }}</td>
+                <td>{{ request.remarks }}</td>
+                <td>{{ request.service_status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Closing Service Request
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-3">Close Service Request</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Service Details</h5>
+            <p class="card-text">
+                <i class="fa fa-user" aria-hidden="true"></i> Professional Name: {{ request.professional.user.name }}<br>
+                <i class="fa fa-cog" aria-hidden="true"></i> Service Name: {{ request.service.name }}<br>
+                <i class="fa fa-hourglass-start" aria-hidden="true"></i> Time Required: {{ request.service.time_required }}<br>
+                <i class="fa fa-inr" aria-hidden="true"></i> Price: {{ request.service.price }}<br>
+                <i class="fa fa-comment" aria-hidden="true"></i> Remarks: {{ request.remarks }}
+            </p>
+        </div>
+    </div>
+    <form action="{{ url_for('close_service', request_id=request.id) }}" method="POST">
+        <div class="mb-3">
+            <label for="rating" class="form-label">Rating (out of 5):</label>
+            <div class="rating">
+                <input type="radio" id="star1" name="rating" value="1" required />
+                <label for="star1" title="1 star"><i class="fa fa-star"></i></label>
+                <input type="radio" id="star2" name="rating" value="2" required />
+                <label for="star2" title="2 stars"><i class="fa fa-star"></i></label>
+                <input type="radio" id="star3" name="rating" value="3" required />
+                <label for="star3" title="3 stars"><i class="fa fa-star"></i></label>
+                <input type="radio" id="star4" name="rating" value="4" required />
+                <label for="star4" title="4 stars"><i class="fa fa-star"></i></label>
+                <input type="radio" id="star5" name="rating" value="5" required />
+                <label for="star5" title="5 stars"><i class="fa fa-star"></i></label>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="review" class="form-label">Review:</label>
+            <textarea class="form-control" id="review" name="review" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Close Service Request</button>
+    </form>
+</div>
+{% endblock %}

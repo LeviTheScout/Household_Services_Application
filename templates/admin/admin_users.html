@@ -1,0 +1,81 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Users Data
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center"><i class="fa fa-users"></i> Users Data</h1>
+
+    <!-- Customers Section -->
+    <h2><i class="fa fa-user"></i> Customers</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-primary">
+                <tr>
+                    <th><i class="fa fa-user-circle"></i> Name</th>
+                    <th><i class="fa fa-map-marker-alt"></i> Address</th>
+                    <th><i class="fa fa-envelope"></i> Pincode</th>
+                    <th><i class="fa fa-tasks"></i> No. of Requests</th>
+                    <th> Is Blocked? </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in customers %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('customer_profile', customer_id=user.customer.id) }}" class="text-decoration-none">
+                            {{ user.name }}
+                        </a>
+                    </td>
+                    <td>{{ user.address }}</td>
+                    <td>{{ user.pincode }}</td>
+                    <td>{{ user.customer.service_requests|length }}</td>
+                    <td> {{ user.is_blocked }} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Professionals Section -->
+    <h2><i class="fa fa-briefcase"></i> Professionals</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-success">
+                <tr>
+                    <th><i class="fa fa-user-circle"></i> Name</th>
+                    <th><i class="fa fa-map-marker-alt"></i> Address</th>
+                    <th><i class="fa fa-envelope"></i> Pincode</th>
+                    <th><i class="fa fa-tasks"></i> No. of Requests</th>
+                    <th><i class="fa fa-star"></i> Average Rating</th>
+                    <th> Is Blocked? </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in professionals %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('professional_profile', professional_id=user.professional.id) }}" class="text-decoration-none">
+                            {{ user.name }}
+                        </a>
+                    </td>
+                    <td>{{ user.address }}</td>
+                    <td>{{ user.pincode }}</td>
+                    <td>{{ user.professional.service_requests|length }}</td>
+                    <td>
+                        {% if user.avg_rating %}
+                        <i class="fa fa-star"></i> {{ user.avg_rating }}
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
+                    <td> {{ user.is_blocked }} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

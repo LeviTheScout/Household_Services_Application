@@ -72,6 +72,10 @@ class ServiceRequest(db.Model):
     service_status = db.Column(db.String(20), nullable=False, default="requested") 
     remarks = db.Column(db.String(256), nullable=True)
 
+    rating = db.Column(db.Integer, nullable=True)
+    review = db.Column(db.String(256), nullable=True)
+
+
     def close_request(self):
         self.service_status = "closed"
         self.date_of_completion = datetime.datetime.utcnow()

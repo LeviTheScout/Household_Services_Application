@@ -6,7 +6,10 @@ Admin Dashboard
 
 {% block content %}
     <h1>Admin Dashboard</h1>
-
+    <div class="mb-4">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-info btn-lg">
+            <i class="fas fa-users"></i> Manage Users
+        </a>
     <h2>Service Professionals</h2>
     <table class="table table-bordered table-striped">
         <thead class="table-primary">
@@ -70,9 +73,43 @@ Admin Dashboard
                 <td>{{ request.customer.user.name }}</td>
                 <td>{{ request.professional.user.name if request.professional else 'Unassigned' }}</td>
                 <td>{{ request.service.name }}</td>
-                <td>{{ request.status }}</td>
+                <td>{{ request.service_status }}</td>
             </tr>
             {% endfor %}
+        </tbody>
+    </table>
+    <h2>Services</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>ID</th>
+                <th>Service Name</th>
+                <th>Base Price</th>
+                <th>Minimum Time Required</th>
+                <th>Description</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for service in services %}
+            <tr>
+                <td>{{ service.id }}</td>
+                <td>{{ service.name }}</td>
+                <td>{{ service.price }}</td>
+                <td>{{ service.time_required }}</td>
+                <td>{{ service.description }}</td>
+                <td>
+                    <a href="{{ url_for('edit_service', service_id=service.id) }}" class="btn btn-warning btn-sm">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="6" class="text-center">
+                    <a href="{{ url_for('add_service') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Add New Service
+                    </a>
+                </td>
+            </tr>
         </tbody>
     </table>
 {% endblock %}
