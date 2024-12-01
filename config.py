@@ -1,7 +1,4 @@
-from dotenv import load_dotenv
-import os
 from app import app
-
-load_dotenv()
-
- # Corrected
+app.config['SECRET_KEY'] = "this-is-my-seceret-key"
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///db.sqlite3"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

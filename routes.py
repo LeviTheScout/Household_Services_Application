@@ -233,8 +233,10 @@ def index():
         return redirect(url_for('dashboard'))
     elif session['user_role']=='service_professional':
         return redirect(url_for('professional_dashboard'))
-    else:
+    elif session['user_role']=='admin':
         return redirect(url_for('admin_dashboard'))
+    else:
+        return redirect(url_for('login'))
 
 
 @app.route('/dashboard')
@@ -471,6 +473,7 @@ def close_service(request_id):
         service_request.review = request.form.get('review')
         service_request.close_request()
         db.session.commit()
+        
         flash('Service request closed successfully.','success')
         return redirect(url_for('dashboard'))
     return render_template('customer/close_service.html', request=service_request)
@@ -562,7 +565,7 @@ def admin_search():
     if request.method == 'POST':
         search_type = request.form.get('search_type')
         search_term = request.form.get('search_term')
-
+        
         # Validate search type
 
         if search_type == 'customers':
@@ -573,6 +576,7 @@ def admin_search():
                         User.address.ilike('%' + search_term + '%')
                     )
                 ).all()
+                
         elif search_type == 'service_professionals':
             
             professionals = ServiceProfessional.query.join(User).join(Service).filter(

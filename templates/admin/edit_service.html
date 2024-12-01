@@ -1,11 +1,12 @@
 {% extends 'layout.html' %}
 {% block title %}
-    Edit {{service.name}}
+    Edit {{ service.name }}
 {% endblock %}
 
 {% block content %}
 <h1>Edit Service: {{ service.name }}</h1>
 
+<!-- Form for updating the service -->
 <form action="" method="post" class="form">
     <div class="form-group">
         <label for="service_name" class="form-label">Service Name</label>
@@ -24,12 +25,16 @@
         <textarea name="description" id="description" class="form-control" rows="5">{{ service.description }}</textarea>
     </div>
     <div class="form-group">
-        <input type="submit" value="Update Service" class="btn btn-primary" style="margin-right: 10px;">
+        <input type="hidden" name="action" value="edit">
+        <input type="submit" value="Update Service" class="btn btn-primary">
     </div>
+</form>
+
+<!-- Form for deleting the service -->
+<form action="" method="post" class="form" style="margin-top: 20px;">
     <div class="form-group">
         <input type="hidden" name="action" value="delete">
-        <input type="submit" value="Delete Service" class="btn btn-danger" style="margin-top: 10px;">
-    </div>
+        <input type="submit" value="Delete Service" class="btn btn-danger">
     </div>
 </form>
 {% endblock %}

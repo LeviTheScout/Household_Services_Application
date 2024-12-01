@@ -66,16 +66,16 @@
             <tr>
                 <th>Service Name</th>
                 <th>Professional Name</th>
-                <th>Your Remark</th>
+                <th>Your Review</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody>
-            {% for request in requests %}
+            {% for request in requests if request.service_status in ['closed','requested'] %}
             <tr>
                 <td>{{ request.service.name }}</td>
                 <td>{{ request.professional.user.name }}</td>
-                <td>{{ request.remarks }}</td>
+                <td>{{ request.review }}</td>
                 <td>{{ request.service_status }}</td>
             </tr>
             {% endfor %}

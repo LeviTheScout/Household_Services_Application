@@ -5,6 +5,7 @@
 
 {% block content %}
     <h2>Available Service Providers for {{ service_name }}</h2>
+    <h5>Note: The final price of the service could be higher than base price. Base price is just minimum price of the request.</h5>
     <table class="table table-bordered table-striped">
         <thead class="table-primary">
             <tr>
@@ -16,7 +17,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for professional in professionals %}
+            {% for professional in professionals if not professional.user.is_blocked%}
             <tr>
                 <td>{{ professional.user.name }}</td>
                 <td>{{ professional.user.address }}</td>
